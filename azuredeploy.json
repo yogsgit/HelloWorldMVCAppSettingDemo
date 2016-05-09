@@ -39,7 +39,24 @@
     },
     "branch": {
       "type": "string"
+    },
+    "storageAccountType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_GRS",
+        "Standard_ZRS",
+        "Premium_LRS"
+      ],
+      "metadata": {
+        "description": "Storage Account type"
+      }
     }
+  },
+  "variables": {
+    "apiVersion": "2015-06-15",
+    "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'standardsa')]"
   },
   "resources": [
     {
@@ -99,6 +116,18 @@
             "branch": "[parameters('branch')]",
             "IsManualIntegration": true
           }
+        },
+        {
+          "apiVersion": "[variables('apiVersion')]",
+          "location": "[parameters('siteLocation')]",
+          "name": "[variables('storageAccountName')]",
+          "properties": {
+            "accountType": "[parameters('storageAccountType')]"
+          },
+          "type": "Microsoft.Storage/storageAccounts",
+          "dependsOn": [
+            "[concat('Microsoft.Web/Sites/', parameters('siteName'))]"
+          ]
         }
       ]
     }
