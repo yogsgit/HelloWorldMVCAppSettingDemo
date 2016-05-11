@@ -3,13 +3,24 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "siteName": {
-      "type": "string"
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "The name of the web app that you wish to create."
+      }
     },
     "hostingPlanName": {
-      "type": "string"
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "The name of the App Service plan to use for hosting the web app."
+      }
     },
     "siteLocation": {
-      "type": "string"
+      "type": "string",
+      "metadata": {
+        "description": "The hosting location for the site."
+      }
     },
     "sku": {
       "type": "string",
@@ -19,7 +30,10 @@
         "Basic",
         "Standard"
       ],
-      "defaultValue": "Free"
+      "defaultValue": "Free",
+      "metadata": {
+        "description": "The pricing tier for the hosting plan."
+      }
     },
     "workerSize": {
       "type": "string",
@@ -28,11 +42,26 @@
         "1",
         "2"
       ],
-      "defaultValue": "0"
+      "defaultValue": "0",
+      "metadata": {
+        "description": "The instance size of the hosting plan (small, medium, or large)."
+      }
     },
-    "someAppSetting": {
+    "EA-EnrollmentNumber": {
       "type": "string",
-      "defaultValue": "Test App Setting Value"
+      "defaultValue": "Enrollment Number for EA Subscription",
+      "minLength": 1,
+      "metadata": {
+        "description": "Enrollment Number for EA Subscription"
+      }
+    },
+    "EA-APIAccessKey": {
+      "type": "string",
+      "defaultValue": "API Access Key for above EnrollmentNumber",
+      "minLength": 1,
+      "metadata": {
+        "description": "API Access Key for above EnrollmentNumber"
+      }
     },
     "repoUrl": {
       "type": "string"
@@ -72,7 +101,7 @@
       }
     },
     {
-      "apiVersion": "2014-06-01",
+      "apiVersion": "2014-11-01",
       "name": "[parameters('siteName')]",
       "type": "Microsoft.Web/Sites",
       "location": "[parameters('siteLocation')]",
@@ -88,23 +117,7 @@
       },
       "resources": [
         {
-          "apiVersion": "2014-04-01",
-          "type": "config",
-          "name": "web",
-          "dependsOn": [
-            "[concat('Microsoft.Web/Sites/', parameters('siteName'))]"
-          ],
-          "properties": {
-            "appSettings": [
-              {
-                "name": "someAppSetting",
-                "value": "[parameters('someAppSetting')]"
-              }
-            ]
-          }
-        },
-        {
-          "apiVersion": "2014-04-01",
+          "apiVersion": "2014-11-01",
           "name": "web",
           "type": "sourcecontrols",
           "dependsOn": [
@@ -128,6 +141,37 @@
           "dependsOn": [
             "[concat('Microsoft.Web/Sites/', parameters('siteName'))]"
           ]
+        },
+        {
+          "apiVersion": "2014-11-01",
+          "name": "appsettings",
+          "type": "config",
+          "dependsOn": [
+            "[concat('Microsoft.Web/Sites/', parameters('siteName'))]"
+          ],
+          "properties": {
+            "EA-EnrollmentNumber": "[parameters('EA-EnrollmentNumber')]",
+            "EA-APIAccessKey": "[parameters('EA-APIAccessKey')]"
+          }
+        },
+        {
+          "apiVersion": "2014-11-01",
+          "name": "connectionstrings",
+          "type": "config",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/Sites', parameters('siteName'))]",
+            "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+          ],
+          "properties": {
+            "AzureWebJobsDashboard": {
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2015-05-01-preview').key1)]",
+              "type": "custom"
+            },
+            "AzureWebJobsStorage": {
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2015-05-01-preview').key1)]",
+              "type": "custom"
+            }
+          }
         }
       ]
     }
